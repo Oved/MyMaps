@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">MyMaps</string>
+    <string name="token_map_box">pk.eyJ1Ijoib3ZlZHJpbmNvbiIsImEiOiJjbGU3emU3cHIwYW5uM3VtaDAyeTB0NXMxIn0.FyUIxGusF5LzeEFtwGD2qA</string>
 </resources>
