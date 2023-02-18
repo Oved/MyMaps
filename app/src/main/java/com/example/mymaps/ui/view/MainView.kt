@@ -2,6 +2,7 @@ package com.example.mymaps.ui.view
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.DialogInterface
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -9,7 +10,9 @@ import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.widget.EditText
 import androidx.annotation.DrawableRes
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.content.res.AppCompatResources
 import com.example.mymaps.R
 import com.example.mymaps.databinding.ActivityMainBinding
@@ -59,7 +62,7 @@ class MainView : AppCompatActivity(), iView, OnMapClickListener , OnMapLongClick
         binding.customTb.linearFavorites.setOnClickListener{goToFavoriteLocations()}
     }
 
-    private fun addAnotationToMap(longitude : Double, latitude : Double){
+    private fun addAnotationToMap(longitude : Double, latitude : Double, texto : String = ""){
         bitmapFromDrawableRes(this,
             R.drawable.ic_location
         )?.let {
@@ -68,6 +71,7 @@ class MainView : AppCompatActivity(), iView, OnMapClickListener , OnMapLongClick
             val pointAnnotationOptions: PointAnnotationOptions = PointAnnotationOptions()
                 .withPoint(Point.fromLngLat(longitude, latitude))
                 .withIconImage(it)
+                .withTextField(texto)
             pointAnnotationManager.create(pointAnnotationOptions)
         }
     }
@@ -142,8 +146,22 @@ class MainView : AppCompatActivity(), iView, OnMapClickListener , OnMapLongClick
     }
 
     override fun onMapLongClick(point: Point): Boolean {
-        listFavoriteLocations.add(point)
-        addAnotationToMap(point.longitude(), point.latitude())
+        var dialog = AlertDialog.Builder(this)
+        var editText = EditText(this)
+        editText.setHint("Name ubication")
+        dialog.setView(editText)
+        dialog.setTitle("Do you want to add the location to favorites?")
+        dialog.setPositiveButton(R.string.save_ubication, DialogInterface.OnClickListener{ dialog, id ->
+            listFavoriteLocations.add(point)
+            var textEdit = editText.editableText
+            addAnotationToMap(point.longitude(), point.latitude(), textEdit.toString() )
+        })
+        dialog.setNegativeButton(R.string.cancel_save, DialogInterface.OnClickListener{ dialog, id ->
+            dialog.cancel()
+        })
+        var alertDialog = dialog.create()
+        alertDialog.show()
+        alertDialog.setCancelable(false)
         return true
     }
 
