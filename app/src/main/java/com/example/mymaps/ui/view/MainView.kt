@@ -2,13 +2,13 @@ package com.example.mymaps.ui.view
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.widget.Toast
 import androidx.annotation.DrawableRes
 import androidx.appcompat.content.res.AppCompatResources
 import com.example.mymaps.R
@@ -36,6 +36,7 @@ class MainView : AppCompatActivity(), iView, OnMapClickListener , OnMapLongClick
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var presenter: iPresenter
+    var listFavoriteLocations = ArrayList<Point>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,6 +55,8 @@ class MainView : AppCompatActivity(), iView, OnMapClickListener , OnMapLongClick
             addOnMapLongClickListener(this@MainView)
             addOnMapClickListener(this@MainView)
         }
+
+        binding.customTb.linearFavorites.setOnClickListener{goToFavoriteLocations()}
     }
 
     private fun addAnotationToMap(longitude : Double, latitude : Double){
@@ -139,11 +142,18 @@ class MainView : AppCompatActivity(), iView, OnMapClickListener , OnMapLongClick
     }
 
     override fun onMapLongClick(point: Point): Boolean {
+        listFavoriteLocations.add(point)
         addAnotationToMap(point.longitude(), point.latitude())
         return true
     }
 
     override fun onMapClick(point: Point): Boolean {
         return false
+    }
+
+    private fun goToFavoriteLocations(){
+        val intent = Intent(this, FavoriteLocations::class.java)
+        //intent.putExtra("list_favorites", listFavoriteLocations)
+        startActivity(intent)
     }
 }
