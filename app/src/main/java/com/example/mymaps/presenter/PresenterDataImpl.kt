@@ -17,4 +17,8 @@ class PresenterDataImpl(var view : iView) : iPresenter {
     override fun showLocations(locations: List<Map>) {
         view.showLocations(locations)
     }
+
+    override fun showError(message: String) {
+        view.showError(message)
+    }
 }

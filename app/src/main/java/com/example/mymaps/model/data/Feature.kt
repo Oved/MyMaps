@@ -1,6 +1,6 @@
 package com.example.mymaps.model.data
 
 class Feature(
-    var map: Map,
+    var properties: Map,
     var geometry: Geometry
 )

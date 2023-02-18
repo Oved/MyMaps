@@ -22,7 +22,7 @@ class GetDataModel(val presenter: iPresenter) : iModel {
         }
     }
 
-    private suspend fun doRequest(): List<Map> {
+    private fun doRequest(): List<Map> {
         var locations: MutableList<Map> = mutableListOf()
         val retrofit = getRetrofit(BASE_URL)
         val service = retrofit.create(iApiService::class.java)
@@ -32,13 +32,12 @@ class GetDataModel(val presenter: iPresenter) : iModel {
             val featureCollection = call.body()
             val listFeat: List<Feature>? = featureCollection?.features
             for (i in 0 until listFeat?.size!!) {
-                locations.add(listFeat[i].map)
+                locations.add(listFeat[i].properties)
             }
-            return locations
         } else {
-            println("Ocurrió un error")
-            return locations
+            presenter.showError("Ha ocurrido un error")
         }
+        return locations
     }
 
     private fun getRetrofit(url: String): Retrofit {

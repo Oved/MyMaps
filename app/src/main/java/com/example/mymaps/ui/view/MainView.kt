@@ -8,6 +8,7 @@ import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.widget.Toast
 import androidx.annotation.DrawableRes
 import androidx.appcompat.content.res.AppCompatResources
 import com.example.mymaps.R
@@ -22,9 +23,16 @@ import com.mapbox.maps.Style
 import com.mapbox.maps.plugin.annotation.annotations
 import com.mapbox.maps.plugin.annotation.generated.PointAnnotationOptions
 import com.mapbox.maps.plugin.annotation.generated.createPointAnnotationManager
+import com.mapbox.maps.plugin.gestures.OnMapClickListener
+import com.mapbox.maps.plugin.gestures.OnMapLongClickListener
+import com.mapbox.maps.plugin.gestures.addOnMapClickListener
+import com.mapbox.maps.plugin.gestures.addOnMapLongClickListener
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @SuppressLint("Lifecycle")
-class MainView : AppCompatActivity(), iView {
+class MainView : AppCompatActivity(), iView, OnMapClickListener , OnMapLongClickListener {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var presenter: iPresenter
@@ -34,24 +42,28 @@ class MainView : AppCompatActivity(), iView {
         binding = ActivityMainBinding.inflate(layoutInflater)
         MAPBOX_ACCESS_TOKEN_RESOURCE_NAME
         setContentView(binding.root)
-        binding.mapView.getMapboxMap().loadStyleUri(Style.MAPBOX_STREETS, object : Style.OnStyleLoaded{
-            override fun onStyleLoaded(style: Style) {
-                addAnotationToMap()
-            }
-        })
+        binding.mapView.getMapboxMap()
+            .loadStyleUri(Style.MAPBOX_STREETS, object : Style.OnStyleLoaded {
+                override fun onStyleLoaded(style: Style) {
+                    addAnotationToMap(-74.0498149, 4.6760501)
+                }
+            })
         presenter = PresenterDataImpl(this)
         searchData()
-
+        binding.mapView.getMapboxMap().apply {
+            addOnMapLongClickListener(this@MainView)
+            addOnMapClickListener(this@MainView)
+        }
     }
 
-    private fun addAnotationToMap(){
+    private fun addAnotationToMap(longitude : Double, latitude : Double){
         bitmapFromDrawableRes(this,
             R.drawable.ic_location
         )?.let {
-            val annotationApi = binding.mapView?.annotations
+            val annotationApi = binding.mapView.annotations
             val pointAnnotationManager = annotationApi.createPointAnnotationManager()
             val pointAnnotationOptions: PointAnnotationOptions = PointAnnotationOptions()
-                .withPoint(Point.fromLngLat(-74.0498149, 4.6760501))
+                .withPoint(Point.fromLngLat(longitude, latitude))
                 .withIconImage(it)
             pointAnnotationManager.create(pointAnnotationOptions)
         }
@@ -85,33 +97,24 @@ class MainView : AppCompatActivity(), iView {
     }
 
     override fun showLocations(locations: List<Map>) {
-        locations.size
-
-//        for (location in locations.indices) {
-//            val anotation = binding.mapView.annotations
-//            val pointAnotationManager = anotation.createPointAnnotationManager()
-//            val pointAnnotationOptions: PointAnnotationOptions = PointAnnotationOptions()
-//                .withPoint(
-//                    Point.fromLngLat(
-//                        locations[location].latitude,
-//                        locations[location].longitude
-//                    )
-//                )
-////            .withIconImage("R.drawable.ic_location")
-//
-//            pointAnotationManager.create(pointAnnotationOptions)
-//
-//        }
+        GlobalScope.launch {
+            //for (i in locations.indices) {
+                var list = 0..100
+                runOnUiThread(Runnable {
+                    for (pos in list) {
+                        addAnotationToMap(
+                            locations[pos].longitude,
+                            locations[pos].latitude
+                        )
+                    }
+                })
+                delay(10000)
+            //}
+        }
     }
 
-    private suspend fun showPoints(point : Map){
-        val anotation = binding.mapView.annotations
-        val pointAnotationManager = anotation.createPointAnnotationManager()
-        val pointAnnotationOptions: PointAnnotationOptions = PointAnnotationOptions()
-            .withPoint(Point.fromLngLat(point.latitude, point.longitude))
-//            .withIconImage("R.drawable.ic_location")
+    override fun showError(message: String) {
 
-        pointAnotationManager.create(pointAnnotationOptions)
     }
 
     override fun onStart() {
@@ -133,5 +136,14 @@ class MainView : AppCompatActivity(), iView {
     override fun onDestroy() {
         super.onDestroy()
         binding.mapView.onDestroy()
+    }
+
+    override fun onMapLongClick(point: Point): Boolean {
+        addAnotationToMap(point.longitude(), point.latitude())
+        return true
+    }
+
+    override fun onMapClick(point: Point): Boolean {
+        return false
     }
 }
