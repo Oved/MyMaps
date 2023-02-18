@@ -6,20 +6,10 @@ pluginManagement {
     }
 }
 dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+
     repositories {
         google()
         mavenCentral()
-        maven {
-            url 'https://api.mapbox.com/downloads/v2/releases/maven'
-            authentication {
-                basic(BasicAuthentication)
-            }
-            credentials {
-                username = "mapbox"
-                password = "pk.eyJ1Ijoib3ZlZHJpbmNvbiIsImEiOiJjbGU3emU3cHIwYW5uM3VtaDAyeTB0NXMxIn0.FyUIxGusF5LzeEFtwGD2qA"
-            }
-        }
     }
 }
 rootProject.name = "MyMaps"
