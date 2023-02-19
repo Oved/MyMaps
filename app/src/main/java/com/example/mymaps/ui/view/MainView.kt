@@ -23,6 +23,7 @@ import com.example.mymaps.databinding.ActivityMainBinding
 import com.example.mymaps.interfaces.iPresenter
 import com.example.mymaps.interfaces.iView
 import com.example.mymaps.model.data.Map
+import com.example.mymaps.model.data.dbsqlite.adminDB.AdminMapsDB
 import com.example.mymaps.presenter.PresenterDataImpl
 import com.mapbox.android.gestures.MoveGestureDetector
 import com.mapbox.geojson.Point
@@ -258,8 +259,10 @@ class MainView : AppCompatActivity(), iView, OnMapClickListener , OnMapLongClick
         dialog.setTitle("Do you want to add the location to favorites?")
         dialog.setPositiveButton(R.string.save_ubication, DialogInterface.OnClickListener{ dialog, id ->
             listFavoriteLocations.add(point)
-            var textEdit = editText.editableText
-            addAnotationToMap(point.longitude(), point.latitude(), textEdit.toString() )
+            var textEdit = editText.editableText.toString()
+            val db = AdminMapsDB(this@MainView)
+            db.insertLocation(textEdit, point.longitude(), point.latitude())
+            addAnotationToMap(point.longitude(), point.latitude(), textEdit )
         })
         dialog.setNegativeButton(R.string.cancel_save, DialogInterface.OnClickListener{ dialog, id ->
             dialog.cancel()
@@ -275,8 +278,6 @@ class MainView : AppCompatActivity(), iView, OnMapClickListener , OnMapLongClick
     }
 
     private fun goToFavoriteLocations(){
-        val intent = Intent(this, FavoriteLocations::class.java)
-        //intent.putExtra("list_favorites", listFavoriteLocations)
-        startActivity(intent)
+        startActivity(Intent(this, FavoriteLocations::class.java))
     }
 }

@@ -6,11 +6,11 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.example.mymaps.R
 import com.example.mymaps.databinding.CardViewFavLocationsBinding
-import com.mapbox.geojson.Point
+import com.example.mymaps.model.data.dbsqlite.typedata.FavoriteSQLite
 
-class FavoriteLocationsAdapter(list: Any?) : RecyclerView.Adapter<FavoriteLocationsAdapter.LocationHolder>() {
+class FavoriteLocationsAdapter(list: List<FavoriteSQLite>) : RecyclerView.Adapter<FavoriteLocationsAdapter.LocationHolder>() {
 
-    var listLocations : ArrayList<Point> = list as ArrayList<Point>
+    var listLocations = list
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): LocationHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.card_view_fav_locations, parent, false)
@@ -27,9 +27,9 @@ class FavoriteLocationsAdapter(list: Any?) : RecyclerView.Adapter<FavoriteLocati
         val bindingHolder = CardViewFavLocationsBinding.bind(view)
 
         fun onBind(position: Int){
-            bindingHolder.tvLatitude.text = listLocations[position].latitude().toString()
-            bindingHolder.tvLongitude.text = listLocations[position].longitude().toString()
-            bindingHolder.tvLocation.text = listLocations[position].type()
+            bindingHolder.tvLatitude.text = listLocations[position].latitude.toString()
+            bindingHolder.tvLongitude.text = listLocations[position].longitude.toString()
+            bindingHolder.tvLocation.text = listLocations[position].nameLocation
         }
     }
 }

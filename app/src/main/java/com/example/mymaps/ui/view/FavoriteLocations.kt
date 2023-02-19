@@ -6,6 +6,7 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.mymaps.databinding.ActivityFavoriteLocationsBinding
+import com.example.mymaps.model.data.dbsqlite.adminDB.AdminMapsDB
 import com.example.mymaps.ui.adapter.FavoriteLocationsAdapter
 
 class FavoriteLocations : AppCompatActivity() {
@@ -16,11 +17,13 @@ class FavoriteLocations : AppCompatActivity() {
         bindingFavorites = ActivityFavoriteLocationsBinding.inflate(layoutInflater)
         setContentView(bindingFavorites.root)
 
+        val db = AdminMapsDB(this@FavoriteLocations)
+        val listFavs = db.showLocations()
+
         var linear = LinearLayoutManager(this,
             RecyclerView.VERTICAL, false)
-        //var list = savedInstanceState?.get("list_favorites")
-        //var adapter = FavoriteLocationsAdapter(list)
-        //bindingFavorites.recyclerFavoriteLocations.adapter = adapter
+        var adapter = FavoriteLocationsAdapter(listFavs)
+        bindingFavorites.recyclerFavoriteLocations.adapter = adapter
         bindingFavorites.recyclerFavoriteLocations.layoutManager = linear
         bindingFavorites.recyclerFavoriteLocations.addItemDecoration(DividerItemDecoration(this, linear.getOrientation()))
 

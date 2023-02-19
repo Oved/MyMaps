@@ -14,6 +14,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.mymaps.R
 import com.example.mymaps.databinding.ActivityLauncherBinding
+import com.example.mymaps.model.data.dbsqlite.InitDB
 import com.google.android.material.snackbar.Snackbar
 
 class Splash : AppCompatActivity() {
@@ -26,8 +27,13 @@ class Splash : AppCompatActivity() {
         setContentView(binding.root)
         doAnimation()
         Handler().postDelayed(Runnable {
+            createDatabase()
             permissions()
         },3000)
+    }
+
+    private fun createDatabase() {
+        InitDB(this@Splash).writableDatabase
     }
 
     private fun doAnimation() {
