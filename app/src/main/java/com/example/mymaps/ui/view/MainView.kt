@@ -1,9 +1,11 @@
 package com.example.mymaps.ui.view
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
@@ -11,25 +13,31 @@ import android.graphics.drawable.Drawable
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.EditText
+import android.widget.Toast
 import androidx.annotation.DrawableRes
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.core.content.ContextCompat
 import com.example.mymaps.R
 import com.example.mymaps.databinding.ActivityMainBinding
 import com.example.mymaps.interfaces.iPresenter
 import com.example.mymaps.interfaces.iView
 import com.example.mymaps.model.data.Map
 import com.example.mymaps.presenter.PresenterDataImpl
+import com.mapbox.android.gestures.MoveGestureDetector
 import com.mapbox.geojson.Point
+import com.mapbox.maps.CameraOptions
 import com.mapbox.maps.MAPBOX_ACCESS_TOKEN_RESOURCE_NAME
 import com.mapbox.maps.Style
+import com.mapbox.maps.extension.style.expressions.dsl.generated.interpolate
+import com.mapbox.maps.plugin.LocationPuck2D
 import com.mapbox.maps.plugin.annotation.annotations
 import com.mapbox.maps.plugin.annotation.generated.PointAnnotationOptions
 import com.mapbox.maps.plugin.annotation.generated.createPointAnnotationManager
-import com.mapbox.maps.plugin.gestures.OnMapClickListener
-import com.mapbox.maps.plugin.gestures.OnMapLongClickListener
-import com.mapbox.maps.plugin.gestures.addOnMapClickListener
-import com.mapbox.maps.plugin.gestures.addOnMapLongClickListener
+import com.mapbox.maps.plugin.gestures.*
+import com.mapbox.maps.plugin.locationcomponent.OnIndicatorBearingChangedListener
+import com.mapbox.maps.plugin.locationcomponent.OnIndicatorPositionChangedListener
+import com.mapbox.maps.plugin.locationcomponent.location
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -40,26 +48,127 @@ class MainView : AppCompatActivity(), iView, OnMapClickListener , OnMapLongClick
     private lateinit var binding: ActivityMainBinding
     private lateinit var presenter: iPresenter
     var listFavoriteLocations = ArrayList<Point>()
+    private val onIndicatorBearingChangedListener = OnIndicatorBearingChangedListener {
+        binding.mapView.getMapboxMap().setCamera(CameraOptions.Builder().bearing(it).build())
+    }
+
+    private val onIndicatorPositionChangedListener = OnIndicatorPositionChangedListener {
+        binding.mapView.getMapboxMap().setCamera(CameraOptions.Builder().center(it).build())
+        binding.mapView.gestures.focalPoint = binding.mapView.getMapboxMap().pixelForCoordinate(it)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         MAPBOX_ACCESS_TOKEN_RESOURCE_NAME
         setContentView(binding.root)
-        binding.mapView.getMapboxMap()
-            .loadStyleUri(Style.MAPBOX_STREETS, object : Style.OnStyleLoaded {
-                override fun onStyleLoaded(style: Style) {
-                    addAnotationToMap(-74.0498149, 4.6760501)
-                }
-            })
+
+        when {
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED -> {
+                onMapReady()
+            }
+            else -> viewMapNotPermission()
+        }
+
         presenter = PresenterDataImpl(this)
         searchData()
         binding.mapView.getMapboxMap().apply {
             addOnMapLongClickListener(this@MainView)
             addOnMapClickListener(this@MainView)
         }
+        binding.customTb.tvLocateMe.setOnClickListener{onMapReady()}
+        binding.customTb.tvFavorites.setOnClickListener{goToFavoriteLocations()}
+    }
 
-        binding.customTb.linearFavorites.setOnClickListener{goToFavoriteLocations()}
+    private fun viewMapNotPermission(){
+        binding.mapView.getMapboxMap()
+            .loadStyleUri(Style.MAPBOX_STREETS, object : Style.OnStyleLoaded {
+                override fun onStyleLoaded(style: Style) {
+                    addAnotationToMap(-74.0498149, 4.6760501)
+                }
+            })
+    }
+
+    private val onMoveListener = object : OnMoveListener {
+        override fun onMove(detector: MoveGestureDetector): Boolean {
+            TODO("Not yet implemented")
+        }
+
+        override fun onMoveBegin(detector: MoveGestureDetector) {
+            onCameraTrackingDismissed()
+        }
+
+        override fun onMoveEnd(detector: MoveGestureDetector) {}
+    }
+
+    private fun onMapReady() {
+        binding.mapView.getMapboxMap().setCamera(
+            CameraOptions.Builder()
+                .zoom(14.0)
+                .build()
+        )
+        binding.mapView.getMapboxMap().loadStyleUri(
+            Style.MAPBOX_STREETS
+        ) {
+            initLocationComponent()
+            setupGesturesListener()
+        }
+    }
+
+    private fun setupGesturesListener() {
+        binding.mapView.gestures.addOnMoveListener(onMoveListener)
+    }
+
+    private fun initLocationComponent() {
+        val locationComponentPlugin = binding.mapView.location
+        locationComponentPlugin.updateSettings {
+            this.enabled = true
+            this.locationPuck = LocationPuck2D(
+                bearingImage = AppCompatResources.getDrawable(
+                    this@MainView,
+                    R.drawable.ic_my_location,
+                ),
+                shadowImage = AppCompatResources.getDrawable(
+                    this@MainView,
+                    R.drawable.ic_my_location,
+                ),
+                scaleExpression = interpolate {
+                    linear()
+                    zoom()
+                    stop {
+                        literal(0.0)
+                        literal(0.6)
+                    }
+                    stop {
+                        literal(20.0)
+                        literal(1.0)
+                    }
+                }.toJson()
+            )
+        }
+        locationComponentPlugin.addOnIndicatorPositionChangedListener(onIndicatorPositionChangedListener)
+        locationComponentPlugin.addOnIndicatorBearingChangedListener(onIndicatorBearingChangedListener)
+    }
+
+    private fun onCameraTrackingDismissed() {
+        Toast.makeText(this, "onCameraTrackingDismissed", Toast.LENGTH_SHORT).show()
+        binding.mapView.location
+            .removeOnIndicatorPositionChangedListener(onIndicatorPositionChangedListener)
+        binding.mapView.location
+            .removeOnIndicatorBearingChangedListener(onIndicatorBearingChangedListener)
+        binding.mapView.gestures.removeOnMoveListener(onMoveListener)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        binding.mapView.location
+            .removeOnIndicatorBearingChangedListener(onIndicatorBearingChangedListener)
+        binding.mapView.location
+            .removeOnIndicatorPositionChangedListener(onIndicatorPositionChangedListener)
+        binding.mapView.gestures.removeOnMoveListener(onMoveListener)
     }
 
     private fun addAnotationToMap(longitude : Double, latitude : Double, texto : String = ""){
@@ -140,10 +249,6 @@ class MainView : AppCompatActivity(), iView, OnMapClickListener , OnMapLongClick
         binding.mapView.onLowMemory()
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        binding.mapView.onDestroy()
-    }
 
     override fun onMapLongClick(point: Point): Boolean {
         var dialog = AlertDialog.Builder(this)
