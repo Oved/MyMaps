@@ -6,6 +6,10 @@
     android:layout_height="match_parent"
     tools:context=".ui.view.FavoriteLocations">
 
+    <include
+        android:id="@+id/custom_tb_recycler"
+        layout="@layout/toolbar_recycler" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_favorite_locations"
         android:layout_margin="3dp"
@@ -13,6 +17,6 @@
         android:layout_height="0dp"
         tools:listitem="@layout/card_view_fav_locations"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toTopOf="parent"/>
+        app:layout_constraintTop_toBottomOf="@+id/custom_tb_recycler"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

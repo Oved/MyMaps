@@ -20,6 +20,8 @@ class FavoriteLocations : AppCompatActivity() {
         bindingFavorites = ActivityFavoriteLocationsBinding.inflate(layoutInflater)
         setContentView(bindingFavorites.root)
 
+        bindingFavorites.customTbRecycler.buttonBack.setOnClickListener { finish() }
+
         val db = AdminMapsDB(this@FavoriteLocations)
         val listFavs = db.showLocations()
 
@@ -41,5 +43,8 @@ class FavoriteLocations : AppCompatActivity() {
         intent.putExtra("latitude", itemclick.latitude)
         setResult(RESULT_OK,intent)
         finish()
+    }
+
+    override fun onBackPressed() {
     }
 }

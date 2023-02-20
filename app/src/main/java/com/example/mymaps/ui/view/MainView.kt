@@ -52,9 +52,12 @@ class MainView : AppCompatActivity(), iView, OnMapClickListener , OnMapLongClick
     var listFavoriteLocations = ArrayList<Point>()
 
     private val responseLauncher = registerForActivityResult(StartActivityForResult()){ activityResult ->
-        val longitude = activityResult.data?.getDoubleExtra("longitude", -74.0498149)
-        val latitude = activityResult.data?.getDoubleExtra("latitude",4.6760501)
-        binding.mapView.getMapboxMap().setCamera(CameraOptions.Builder().center(Point.fromLngLat(longitude!!, latitude!!)).build())
+        if (activityResult.resultCode.equals(RESULT_OK)){
+            val longitude = activityResult.data?.getDoubleExtra("longitude", -74.0498149)
+            val latitude = activityResult.data?.getDoubleExtra("latitude",4.6760501)
+            binding.mapView.getMapboxMap().setCamera(CameraOptions.Builder().center(Point.fromLngLat(longitude!!, latitude!!)).build())
+        }else{onMapReady()}
+
     }
     private val onIndicatorBearingChangedListener = OnIndicatorBearingChangedListener {
         binding.mapView.getMapboxMap().setCamera(CameraOptions.Builder().bearing(it).build())

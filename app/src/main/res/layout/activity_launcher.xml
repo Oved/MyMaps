@@ -23,7 +23,7 @@
         android:layout_height="wrap_content"
         android:text="of"
         android:textStyle="bold"
-        android:textColor="#21738F"
+        android:textColor="#036397"
         android:textSize="30sp"
         app:layout_constraintTop_toBottomOf="@+id/image"
         app:layout_constraintBottom_toTopOf="@+id/ivSplash"
