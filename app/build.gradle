@@ -60,12 +60,6 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.5.1'
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
 
-    //Mapbox
-//    implementation 'com.mapbox.maps:android:10.11.0'
-//    implementation 'com.mapbox.mapboxsdk:mapbox-android-sdk:9.7.0'
-//    implementation 'com.mapbox.mapboxsdk:mapbox-sdk-geojson:6.9.0'
-//    implementation 'com.mapbox.mapboxsdk:mapbox-sdk-services:5.8.0'
-//    implementation 'com.mapbox.mapboxsdk:mapbox-android-core:3.1.0'
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'

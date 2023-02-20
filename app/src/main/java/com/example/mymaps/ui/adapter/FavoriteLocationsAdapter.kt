@@ -8,9 +8,14 @@ import com.example.mymaps.R
 import com.example.mymaps.databinding.CardViewFavLocationsBinding
 import com.example.mymaps.model.data.dbsqlite.typedata.FavoriteSQLite
 
-class FavoriteLocationsAdapter(list: List<FavoriteSQLite>) : RecyclerView.Adapter<FavoriteLocationsAdapter.LocationHolder>() {
+class FavoriteLocationsAdapter(list: List<FavoriteSQLite>, clickFav : FavoriteLocationsAdapter.OnItemClickListener) : RecyclerView.Adapter<FavoriteLocationsAdapter.LocationHolder>() {
 
     var listLocations = list
+     var click : FavoriteLocationsAdapter.OnItemClickListener = clickFav
+
+    interface OnItemClickListener{
+        fun onItemClick(fav : FavoriteSQLite)
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): LocationHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.card_view_fav_locations, parent, false)
@@ -30,6 +35,7 @@ class FavoriteLocationsAdapter(list: List<FavoriteSQLite>) : RecyclerView.Adapte
             bindingHolder.tvLatitude.text = listLocations[position].latitude.toString()
             bindingHolder.tvLongitude.text = listLocations[position].longitude.toString()
             bindingHolder.tvLocation.text = listLocations[position].nameLocation
+            bindingHolder.buttonGo.setOnClickListener { click.onItemClick(listLocations[position]) }
         }
     }
 }

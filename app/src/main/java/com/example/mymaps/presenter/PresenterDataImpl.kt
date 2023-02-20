@@ -4,7 +4,7 @@ import com.example.mymaps.interfaces.iModel
 import com.example.mymaps.interfaces.iPresenter
 import com.example.mymaps.interfaces.iView
 import com.example.mymaps.model.GetDataModel
-import com.example.mymaps.model.data.Map
+import com.example.mymaps.model.data.dbsqlite.typedata.Map
 
 class PresenterDataImpl(var view : iView) : iPresenter {
 

@@ -14,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.EditText
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts.*
 import androidx.annotation.DrawableRes
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.content.res.AppCompatResources
@@ -22,7 +23,7 @@ import com.example.mymaps.R
 import com.example.mymaps.databinding.ActivityMainBinding
 import com.example.mymaps.interfaces.iPresenter
 import com.example.mymaps.interfaces.iView
-import com.example.mymaps.model.data.Map
+import com.example.mymaps.model.data.dbsqlite.typedata.Map
 import com.example.mymaps.model.data.dbsqlite.adminDB.AdminMapsDB
 import com.example.mymaps.presenter.PresenterDataImpl
 import com.mapbox.android.gestures.MoveGestureDetector
@@ -49,6 +50,12 @@ class MainView : AppCompatActivity(), iView, OnMapClickListener , OnMapLongClick
     private lateinit var binding: ActivityMainBinding
     private lateinit var presenter: iPresenter
     var listFavoriteLocations = ArrayList<Point>()
+
+    private val responseLauncher = registerForActivityResult(StartActivityForResult()){ activityResult ->
+        val longitude = activityResult.data?.getDoubleExtra("longitude", -74.0498149)
+        val latitude = activityResult.data?.getDoubleExtra("latitude",4.6760501)
+        viewMapNotPermission(longitude!!, latitude!!)
+    }
     private val onIndicatorBearingChangedListener = OnIndicatorBearingChangedListener {
         binding.mapView.getMapboxMap().setCamera(CameraOptions.Builder().bearing(it).build())
     }
@@ -71,7 +78,7 @@ class MainView : AppCompatActivity(), iView, OnMapClickListener , OnMapLongClick
             ) == PackageManager.PERMISSION_GRANTED -> {
                 onMapReady()
             }
-            else -> viewMapNotPermission()
+            else -> viewMapNotPermission(-74.0498149, 4.6760501)
         }
 
         presenter = PresenterDataImpl(this)
@@ -84,11 +91,11 @@ class MainView : AppCompatActivity(), iView, OnMapClickListener , OnMapLongClick
         binding.customTb.tvFavorites.setOnClickListener{goToFavoriteLocations()}
     }
 
-    private fun viewMapNotPermission(){
+    private fun viewMapNotPermission(longitude: Double, latitude: Double){
         binding.mapView.getMapboxMap()
             .loadStyleUri(Style.MAPBOX_STREETS, object : Style.OnStyleLoaded {
                 override fun onStyleLoaded(style: Style) {
-                    addAnotationToMap(-74.0498149, 4.6760501)
+                    addAnotationToMap(longitude, latitude)
                 }
             })
     }
@@ -155,7 +162,7 @@ class MainView : AppCompatActivity(), iView, OnMapClickListener , OnMapLongClick
     }
 
     private fun onCameraTrackingDismissed() {
-        Toast.makeText(this, "onCameraTrackingDismissed", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "Current location", Toast.LENGTH_SHORT).show()
         binding.mapView.location
             .removeOnIndicatorPositionChangedListener(onIndicatorPositionChangedListener)
         binding.mapView.location
@@ -215,8 +222,7 @@ class MainView : AppCompatActivity(), iView, OnMapClickListener , OnMapLongClick
 
     override fun showLocations(locations: List<Map>) {
         GlobalScope.launch {
-            //for (i in locations.indices) {
-                var list = 0..100
+                var list = 0..50
                 runOnUiThread(Runnable {
                     for (pos in list) {
                         addAnotationToMap(
@@ -225,8 +231,7 @@ class MainView : AppCompatActivity(), iView, OnMapClickListener , OnMapLongClick
                         )
                     }
                 })
-                delay(10000)
-            //}
+                delay(5000)
         }
     }
 
@@ -278,6 +283,7 @@ class MainView : AppCompatActivity(), iView, OnMapClickListener , OnMapLongClick
     }
 
     private fun goToFavoriteLocations(){
-        startActivity(Intent(this, FavoriteLocations::class.java))
+        val intent = Intent(this, FavoriteLocations::class.java)
+        responseLauncher.launch(intent)
     }
 }

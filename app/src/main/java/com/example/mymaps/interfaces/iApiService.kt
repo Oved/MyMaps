@@ -1,6 +1,6 @@
 package com.example.mymaps.interfaces
 
-import com.example.mymaps.model.data.FeatureCollection
+import com.example.mymaps.model.data.dbsqlite.typedata.FeatureCollection
 import retrofit2.Call
 import retrofit2.http.GET
 

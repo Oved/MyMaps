@@ -3,8 +3,8 @@ package com.example.mymaps.model
 import com.example.mymaps.interfaces.iApiService
 import com.example.mymaps.interfaces.iModel
 import com.example.mymaps.interfaces.iPresenter
-import com.example.mymaps.model.data.Feature
-import com.example.mymaps.model.data.Map
+import com.example.mymaps.model.data.dbsqlite.typedata.Feature
+import com.example.mymaps.model.data.dbsqlite.typedata.Map
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient

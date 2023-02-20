@@ -1,6 +1,6 @@
 package com.example.mymaps.interfaces
 
-import com.example.mymaps.model.data.Map
+import com.example.mymaps.model.data.dbsqlite.typedata.Map
 
 interface iView {
 
