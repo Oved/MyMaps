@@ -225,7 +225,7 @@ class MainView : AppCompatActivity(), iView, OnMapClickListener , OnMapLongClick
 
     override fun showLocations(locations: List<Map>) {
         GlobalScope.launch {
-                var list = 0..50
+                var list = 0..100
                 runOnUiThread(Runnable {
                     for (pos in list) {
                         addAnotationToMap(
