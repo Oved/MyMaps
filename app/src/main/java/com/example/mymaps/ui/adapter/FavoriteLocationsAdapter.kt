@@ -35,6 +35,11 @@ class FavoriteLocationsAdapter(list: List<FavoriteSQLite>, clickFav : FavoriteLo
             bindingHolder.tvLatitude.text = listLocations[position].latitude.toString()
             bindingHolder.tvLongitude.text = listLocations[position].longitude.toString()
             bindingHolder.tvLocation.text = listLocations[position].nameLocation
+            if (listLocations[position].type == "Alert"){
+                bindingHolder.itemLocation.setImageDrawable(bindingHolder.itemLocation.resources.getDrawable(R.drawable.ic_baseline_report_24))
+            }else{
+                bindingHolder.itemLocation.setImageDrawable(bindingHolder.itemLocation.resources.getDrawable(R.drawable.ic_baseline_location_on_24))
+            }
             bindingHolder.buttonGo.setOnClickListener { click.onItemClick(listLocations[position]) }
         }
     }

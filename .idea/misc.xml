@@ -3,12 +3,19 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Users/USER/Documents/Proyectos Personales/mymaps/app/src/main/res/drawable/ic_baseline_location_on_24.xml" value="0.3255" />
+        <entry key="..\:/Users/USER/Documents/Proyectos Personales/mymaps/app/src/main/res/drawable/ic_baseline_report_24.xml" value="0.3255" />
         <entry key="..\:/Users/USER/Documents/Proyectos Personales/mymaps/app/src/main/res/drawable/ic_go.xml" value="0.3105" />
+        <entry key="..\:/Users/USER/Documents/Proyectos Personales/mymaps/app/src/main/res/drawable/ic_location.xml" value="0.3255" />
+        <entry key="..\:/Users/USER/Documents/Proyectos Personales/mymaps/app/src/main/res/drawable/ic_my_location.xml" value="0.3255" />
         <entry key="..\:/Users/USER/Documents/Proyectos Personales/mymaps/app/src/main/res/layout/activity_favorite_locations.xml" value="0.34479166666666666" />
-        <entry key="..\:/Users/USER/Documents/Proyectos Personales/mymaps/app/src/main/res/layout/activity_launcher.xml" value="0.34479166666666666" />
+        <entry key="..\:/Users/USER/Documents/Proyectos Personales/mymaps/app/src/main/res/layout/activity_launcher.xml" value="0.264" />
         <entry key="..\:/Users/USER/Documents/Proyectos Personales/mymaps/app/src/main/res/layout/activity_main.xml" value="0.34479166666666666" />
         <entry key="..\:/Users/USER/Documents/Proyectos Personales/mymaps/app/src/main/res/layout/card_view_fav_locations.xml" value="0.34479166666666666" />
         <entry key="..\:/Users/USER/Documents/Proyectos Personales/mymaps/app/src/main/res/layout/custom_toolbar.xml" value="0.34479166666666666" />
+        <entry key="..\:/Users/USER/Documents/Proyectos Personales/mymaps/app/src/main/res/layout/dialog_personal.xml" value="0.34375" />
+        <entry key="..\:/Users/USER/Documents/Proyectos Personales/mymaps/app/src/main/res/layout/spinner_dialog.xml" value="0.34375" />
+        <entry key="..\:/Users/USER/Documents/Proyectos Personales/mymaps/app/src/main/res/layout/spinner_styles.xml" value="0.34375" />
         <entry key="..\:/Users/USER/Documents/Proyectos Personales/mymaps/app/src/main/res/layout/toolbar_recycler.xml" value="0.34375" />
       </map>
     </option>

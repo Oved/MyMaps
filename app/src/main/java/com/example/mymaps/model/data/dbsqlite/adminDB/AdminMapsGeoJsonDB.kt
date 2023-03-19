@@ -13,6 +13,7 @@ class AdminMapsGeoJsonDB(val context: Context) : InitDB(context){
         values.put("name", name)
         values.put("longitude", longitude)
         values.put("latitude", latitude)
+        values.put("type", latitude)
 
         sqLite.insert(TABLE_FAVORITES, null, values)
     }

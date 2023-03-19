@@ -39,7 +39,7 @@
             android:layout_alignParentTop="true"
             android:layout_alignParentBottom="true"
             android:scaleType="centerInside"
-            android:src="@drawable/ic_location" />
+            tools:src="@drawable/ic_baseline_report_24" />
 
         <TextView
             android:id="@+id/title_location"
@@ -52,6 +52,7 @@
             android:textColor="@color/white"
             android:textSize="18sp"
             android:textStyle="bold" />
+
 
         <TextView
             android:id="@+id/tv_location"

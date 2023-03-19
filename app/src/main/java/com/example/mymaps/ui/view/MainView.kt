@@ -12,13 +12,15 @@ import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.widget.EditText
-import android.widget.Toast
+import android.util.Log
+import android.view.View
+import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts.*
 import androidx.annotation.DrawableRes
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.content.ContextCompat
+import androidx.core.view.get
 import com.example.mymaps.R
 import com.example.mymaps.databinding.ActivityMainBinding
 import com.example.mymaps.interfaces.iPresenter
@@ -30,13 +32,16 @@ import com.mapbox.android.gestures.MoveGestureDetector
 import com.mapbox.geojson.Point
 import com.mapbox.maps.CameraOptions
 import com.mapbox.maps.MAPBOX_ACCESS_TOKEN_RESOURCE_NAME
+import com.mapbox.maps.MapboxMap
 import com.mapbox.maps.Style
 import com.mapbox.maps.extension.style.expressions.dsl.generated.interpolate
 import com.mapbox.maps.plugin.LocationPuck2D
+import com.mapbox.maps.plugin.animation.rotateBy
 import com.mapbox.maps.plugin.annotation.annotations
 import com.mapbox.maps.plugin.annotation.generated.PointAnnotationOptions
 import com.mapbox.maps.plugin.annotation.generated.createPointAnnotationManager
 import com.mapbox.maps.plugin.gestures.*
+import com.mapbox.maps.plugin.locationcomponent.LocationComponentConstants
 import com.mapbox.maps.plugin.locationcomponent.OnIndicatorBearingChangedListener
 import com.mapbox.maps.plugin.locationcomponent.OnIndicatorPositionChangedListener
 import com.mapbox.maps.plugin.locationcomponent.location
@@ -73,12 +78,46 @@ class MainView : AppCompatActivity(), iView, OnMapClickListener , OnMapLongClick
         binding = ActivityMainBinding.inflate(layoutInflater)
         MAPBOX_ACCESS_TOKEN_RESOURCE_NAME
         setContentView(binding.root)
+        val itemSelect = object : AdapterView.OnItemSelectedListener {
+            @SuppressLint("UseCompatLoadingForDrawables")
+            override fun onItemSelected(
+                parent: AdapterView<*>?,
+                view: View?,
+                position: Int,
+                id: Long
+            ) {
+                when (binding.customTb.spinnerBasemap.selectedItem.toString()) {
+                    "Mapbox Streets" -> binding.customTb.imageMap.setImageDrawable(resources.getDrawable(R.drawable.map))
+                    "Satellite" -> binding.customTb.imageMap.setImageDrawable(resources.getDrawable(R.drawable.satellite))
+                    "Traffic day" -> binding.customTb.imageMap.setImageDrawable(resources.getDrawable(R.drawable.traffic))
+                    else -> binding.customTb.imageMap.setImageDrawable(resources.getDrawable(R.drawable.map))
+                }
+                loadStyle()
+            }
 
-        when {
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+
+            }
+        }
+        binding.customTb.spinnerBasemap.onItemSelectedListener = itemSelect
+
+        loadSpinner()
+        loadInitialData()
+        binding.floatingAlert.setOnClickListener{
+            binding.floatingMenu.collapse()
+        }
+    }
+
+    private fun loadInitialData(){
+        loadMap()
+    }
+
+    private fun loadMap(){
+        when (PackageManager.PERMISSION_GRANTED) {
             ContextCompat.checkSelfPermission(
                 this,
                 Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED -> {
+            ) -> {
                 onMapReady()
             }
             else -> viewMapNotPermission(-74.0498149, 4.6760501)
@@ -90,18 +129,33 @@ class MainView : AppCompatActivity(), iView, OnMapClickListener , OnMapLongClick
             addOnMapLongClickListener(this@MainView)
             addOnMapClickListener(this@MainView)
         }
-        binding.customTb.tvLocateMe.setOnClickListener{onMapReady()}
+        binding.floatingButtonLocation.setOnClickListener{onMapReady()}
         binding.customTb.tvFavorites.setOnClickListener{goToFavoriteLocations()}
+    }
+
+    private fun loadSpinner(){
+        val listStyles = mutableListOf<String>()
+        listStyles.add("Mapbox Streets")
+        listStyles.add("Satellite")
+        listStyles.add("Traffic day")
+        binding.customTb.spinnerBasemap.adapter = ArrayAdapter(this, R.layout.spinner_styles, listStyles)
     }
 
     private fun viewMapNotPermission(longitude: Double, latitude: Double){
         binding.mapView.getMapboxMap()
-            .loadStyleUri(Style.MAPBOX_STREETS, object : Style.OnStyleLoaded {
+            .loadStyleUri(getStyleMap(), object : Style.OnStyleLoaded {
                 override fun onStyleLoaded(style: Style) {
-                    addAnotationToMap(longitude, latitude)
+                    addAnotationToMap(longitude, latitude, isAlert = false)
                 }
             })
     }
+
+    private fun getStyleMap() = when (binding.customTb.spinnerBasemap.selectedItem.toString()) {
+            "Mapbox Streets" -> Style.MAPBOX_STREETS
+            "Satellite" -> Style.SATELLITE
+            "Traffic day" -> Style.TRAFFIC_DAY
+            else -> Style.MAPBOX_STREETS
+        }
 
     private val onMoveListener = object : OnMoveListener {
         override fun onMove(detector: MoveGestureDetector): Boolean {
@@ -122,7 +176,7 @@ class MainView : AppCompatActivity(), iView, OnMapClickListener , OnMapLongClick
                 .build()
         )
         binding.mapView.getMapboxMap().loadStyleUri(
-            Style.MAPBOX_STREETS
+            getStyleMap()
         ) {
             initLocationComponent()
             setupGesturesListener()
@@ -140,11 +194,11 @@ class MainView : AppCompatActivity(), iView, OnMapClickListener , OnMapLongClick
             this.locationPuck = LocationPuck2D(
                 bearingImage = AppCompatResources.getDrawable(
                     this@MainView,
-                    R.drawable.ic_my_location,
+                    R.drawable.ic_baseline_my_location_24,
                 ),
                 shadowImage = AppCompatResources.getDrawable(
                     this@MainView,
-                    R.drawable.ic_my_location,
+                    R.drawable.ic_baseline_my_location_24,
                 ),
                 scaleExpression = interpolate {
                     linear()
@@ -182,9 +236,11 @@ class MainView : AppCompatActivity(), iView, OnMapClickListener , OnMapLongClick
         binding.mapView.gestures.removeOnMoveListener(onMoveListener)
     }
 
-    private fun addAnotationToMap(longitude : Double, latitude : Double, texto : String = ""){
+    private fun addAnotationToMap(longitude : Double, latitude : Double, texto : String = "", isAlert: Boolean){
+
+        val image = if (isAlert) R.drawable.ic_baseline_report_24 else R.drawable.ic_location
         bitmapFromDrawableRes(this,
-            R.drawable.ic_location
+            image
         )?.let {
             val annotationApi = binding.mapView.annotations
             val pointAnnotationManager = annotationApi.createPointAnnotationManager()
@@ -230,7 +286,7 @@ class MainView : AppCompatActivity(), iView, OnMapClickListener , OnMapLongClick
                     for (pos in list) {
                         addAnotationToMap(
                             locations[pos].longitude,
-                            locations[pos].latitude
+                            locations[pos].latitude, isAlert = false
                         )
                     }
                 })
@@ -260,29 +316,42 @@ class MainView : AppCompatActivity(), iView, OnMapClickListener , OnMapLongClick
 
 
     override fun onMapLongClick(point: Point): Boolean {
-        var dialog = AlertDialog.Builder(this)
-        var editText = EditText(this)
-        editText.setHint("Name ubication")
-        dialog.setView(editText)
-        dialog.setTitle("Do you want to add the location to favorites?")
-        dialog.setPositiveButton(R.string.save_ubication, DialogInterface.OnClickListener{ dialog, id ->
-            listFavoriteLocations.add(point)
-            var textEdit = editText.editableText.toString()
-            val db = AdminMapsDB(this@MainView)
-            db.insertLocation(textEdit, point.longitude(), point.latitude())
-            addAnotationToMap(point.longitude(), point.latitude(), textEdit )
-        })
-        dialog.setNegativeButton(R.string.cancel_save, DialogInterface.OnClickListener{ dialog, id ->
-            dialog.cancel()
-        })
-        var alertDialog = dialog.create()
-        alertDialog.show()
-        alertDialog.setCancelable(false)
-        return true
+        return false
     }
 
     override fun onMapClick(point: Point): Boolean {
-        return false
+        createPoint(point)
+        return true
+    }
+
+    private fun createPoint(point: Point){
+
+        var dialog: AlertDialog? = null
+        val alertDialog = AlertDialog.Builder(this)
+        val customLayout = layoutInflater.inflate(R.layout.dialog_personal, null)
+        val btnSave = customLayout.findViewById<Button>(R.id.btnSave)
+        val spinner = customLayout.findViewById<Spinner>(R.id.spinnerTypePoints)
+        val listType = mutableListOf<String>()
+        listType.add("Normal")
+        listType.add("Alert")
+        spinner.adapter = ArrayAdapter(this, R.layout.spinner_dialog, listType)
+        val etNamePoint = customLayout.findViewById<EditText>(R.id.etNamePoint)
+        alertDialog.setView(customLayout)
+        dialog = alertDialog.create()
+        dialog.show()
+        btnSave.setOnClickListener {
+            listFavoriteLocations.add(point)
+            val textEdit = etNamePoint.text.toString()
+            val db = AdminMapsDB(this@MainView)
+            db.insertLocation(textEdit, point.longitude(), point.latitude(), spinner.selectedItem.toString())
+            val isAlert = spinner.selectedItem.toString()=="Alert"
+            addAnotationToMap(point.longitude(), point.latitude(), textEdit , isAlert)
+            dialog.dismiss()
+        }
+    }
+
+    private fun loadStyle(){
+        binding.mapView.getMapboxMap().loadStyleUri(getStyleMap())
     }
 
     private fun goToFavoriteLocations(){
