@@ -3,7 +3,6 @@ package com.example.mymaps.ui.view
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -12,7 +11,8 @@ import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
+import android.os.Handler
+import android.os.Looper
 import android.view.View
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts.*
@@ -20,34 +20,26 @@ import androidx.annotation.DrawableRes
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.content.ContextCompat
-import androidx.core.view.get
 import com.example.mymaps.R
 import com.example.mymaps.databinding.ActivityMainBinding
 import com.example.mymaps.interfaces.iPresenter
 import com.example.mymaps.interfaces.iView
-import com.example.mymaps.model.data.dbsqlite.typedata.Map
 import com.example.mymaps.model.data.dbsqlite.adminDB.AdminMapsDB
+import com.example.mymaps.model.data.dbsqlite.adminDB.AdminMapsGeoJsonDB
 import com.example.mymaps.presenter.PresenterDataImpl
 import com.mapbox.android.gestures.MoveGestureDetector
 import com.mapbox.geojson.Point
 import com.mapbox.maps.CameraOptions
 import com.mapbox.maps.MAPBOX_ACCESS_TOKEN_RESOURCE_NAME
-import com.mapbox.maps.MapboxMap
 import com.mapbox.maps.Style
 import com.mapbox.maps.extension.style.expressions.dsl.generated.interpolate
 import com.mapbox.maps.plugin.LocationPuck2D
-import com.mapbox.maps.plugin.animation.rotateBy
 import com.mapbox.maps.plugin.annotation.annotations
 import com.mapbox.maps.plugin.annotation.generated.PointAnnotationOptions
 import com.mapbox.maps.plugin.annotation.generated.createPointAnnotationManager
 import com.mapbox.maps.plugin.gestures.*
-import com.mapbox.maps.plugin.locationcomponent.LocationComponentConstants
-import com.mapbox.maps.plugin.locationcomponent.OnIndicatorBearingChangedListener
-import com.mapbox.maps.plugin.locationcomponent.OnIndicatorPositionChangedListener
-import com.mapbox.maps.plugin.locationcomponent.location
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import com.mapbox.maps.plugin.locationcomponent.*
+import kotlinx.coroutines.*
 
 @SuppressLint("Lifecycle")
 class MainView : AppCompatActivity(), iView, OnMapClickListener , OnMapLongClickListener {
@@ -57,10 +49,10 @@ class MainView : AppCompatActivity(), iView, OnMapClickListener , OnMapLongClick
     var listFavoriteLocations = ArrayList<Point>()
 
     private val responseLauncher = registerForActivityResult(StartActivityForResult()){ activityResult ->
-        if (activityResult.resultCode.equals(RESULT_OK)){
+        if (activityResult.resultCode == RESULT_OK){
             val longitude = activityResult.data?.getDoubleExtra("longitude", -74.0498149)
             val latitude = activityResult.data?.getDoubleExtra("latitude",4.6760501)
-            binding.mapView.getMapboxMap().setCamera(CameraOptions.Builder().center(Point.fromLngLat(longitude!!, latitude!!)).build())
+            binding.mapView.getMapboxMap().setCamera(CameraOptions.Builder().center(Point.fromLngLat(longitude!!, latitude!!)).zoom(5.0).build())
         }else{onMapReady()}
 
     }
@@ -106,6 +98,14 @@ class MainView : AppCompatActivity(), iView, OnMapClickListener , OnMapLongClick
         binding.floatingAlert.setOnClickListener{
             binding.floatingMenu.collapse()
         }
+        Handler(Looper.getMainLooper()).postDelayed({
+        }, 2000)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        searchData()
+        showSavedPoints()
     }
 
     private fun loadInitialData(){
@@ -123,8 +123,7 @@ class MainView : AppCompatActivity(), iView, OnMapClickListener , OnMapLongClick
             else -> viewMapNotPermission(-74.0498149, 4.6760501)
         }
 
-        presenter = PresenterDataImpl(this)
-        searchData()
+        presenter = PresenterDataImpl(this, this)
         binding.mapView.getMapboxMap().apply {
             addOnMapLongClickListener(this@MainView)
             addOnMapClickListener(this@MainView)
@@ -145,7 +144,7 @@ class MainView : AppCompatActivity(), iView, OnMapClickListener , OnMapLongClick
         binding.mapView.getMapboxMap()
             .loadStyleUri(getStyleMap(), object : Style.OnStyleLoaded {
                 override fun onStyleLoaded(style: Style) {
-                    addAnotationToMap(longitude, latitude, isAlert = false)
+                    addAnnotationToMap(longitude, latitude, isAlert = false)
                 }
             })
     }
@@ -172,7 +171,7 @@ class MainView : AppCompatActivity(), iView, OnMapClickListener , OnMapLongClick
     private fun onMapReady() {
         binding.mapView.getMapboxMap().setCamera(
             CameraOptions.Builder()
-                .zoom(14.0)
+                .zoom(10.0)
                 .build()
         )
         binding.mapView.getMapboxMap().loadStyleUri(
@@ -219,7 +218,6 @@ class MainView : AppCompatActivity(), iView, OnMapClickListener , OnMapLongClick
     }
 
     private fun onCameraTrackingDismissed() {
-        Toast.makeText(this, "Current location", Toast.LENGTH_SHORT).show()
         binding.mapView.location
             .removeOnIndicatorPositionChangedListener(onIndicatorPositionChangedListener)
         binding.mapView.location
@@ -236,7 +234,7 @@ class MainView : AppCompatActivity(), iView, OnMapClickListener , OnMapLongClick
         binding.mapView.gestures.removeOnMoveListener(onMoveListener)
     }
 
-    private fun addAnotationToMap(longitude : Double, latitude : Double, texto : String = "", isAlert: Boolean){
+    fun addAnnotationToMap(longitude : Double, latitude : Double, texto : String = "", isAlert: Boolean){
 
         val image = if (isAlert) R.drawable.ic_baseline_report_24 else R.drawable.ic_location
         bitmapFromDrawableRes(this,
@@ -279,23 +277,46 @@ class MainView : AppCompatActivity(), iView, OnMapClickListener , OnMapLongClick
         presenter.searchData()
     }
 
-    override fun showLocations(locations: List<Map>) {
+    private fun showSavedPoints(){
+        val db = AdminMapsDB(this@MainView)
+        val points =db.showLocations()
+        GlobalScope.launch {
+            runOnUiThread(Runnable {
+                for (pos in points) {
+                    addAnnotationToMap(
+                        pos.longitude,
+                        pos.latitude,
+                        pos.nameLocation,
+                        pos.type == "Alert"
+                    )
+                }
+            })
+            delay(5000)
+        }
+        db.close()
+    }
+
+    override fun showLocations() {
+        val db = AdminMapsGeoJsonDB(this@MainView)
+        val points =db.showLocations()
         GlobalScope.launch {
                 var list = 0..100
                 runOnUiThread(Runnable {
                     for (pos in list) {
-                        addAnotationToMap(
-                            locations[pos].longitude,
-                            locations[pos].latitude, isAlert = false
+                        addAnnotationToMap(
+                            points[pos].longitude,
+                            points[pos].latitude,
+                            isAlert = false
                         )
                     }
                 })
                 delay(5000)
         }
+        db.close()
     }
 
     override fun showError(message: String) {
-
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
     override fun onStart() {
@@ -345,7 +366,7 @@ class MainView : AppCompatActivity(), iView, OnMapClickListener , OnMapLongClick
             val db = AdminMapsDB(this@MainView)
             db.insertLocation(textEdit, point.longitude(), point.latitude(), spinner.selectedItem.toString())
             val isAlert = spinner.selectedItem.toString()=="Alert"
-            addAnotationToMap(point.longitude(), point.latitude(), textEdit , isAlert)
+            addAnnotationToMap(point.longitude(), point.latitude(), textEdit , isAlert)
             dialog.dismiss()
         }
     }
